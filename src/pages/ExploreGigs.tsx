@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Filter, Star, Heart, Eye, Clock, ChevronDown, Grid, List, SlidersHorizontal, MapPin, Shield, Zap, Award, Users, TrendingUp } from 'lucide-react';
 
 const ExploreGigs = () => {
@@ -644,12 +645,12 @@ const ExploreGigs = () => {
 
                     {/* Quick Action Buttons */}
                     <div className="mt-4 flex space-x-2">
-                      <a
-                        href={`/gig/${gig.id}`}
+                      <Link
+                        to={gig.id === 1 ? `/product/${gig.id}` : `/gig/${gig.id}`}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium text-center hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
                       >
                         View Details
-                      </a>
+                      </Link>
                       <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                         <Eye className="h-4 w-4" />
                       </button>

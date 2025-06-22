@@ -176,7 +176,7 @@ const FeaturedGigs = () => {
 
                 {/* Gig Title */}
                 <Link
-                  to={`/gig/${gig.id}`}
+                  to={gig.id === 1 ? `/product/${gig.id}` : `/gig/${gig.id}`}
                   className="block text-lg font-semibold text-gray-900 mb-3 hover:text-blue-600 transition-colors duration-200 line-clamp-2"
                 >
                   {gig.title}
@@ -206,7 +206,7 @@ const FeaturedGigs = () => {
                 {/* Quick Action Buttons */}
                 <div className="mt-4 flex space-x-2">
                   <Link
-                    to={`/gig/${gig.id}`}
+                    to={gig.id === 1 ? `/product/${gig.id}` : `/gig/${gig.id}`}
                     className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium text-center hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
                   >
                     View Details
