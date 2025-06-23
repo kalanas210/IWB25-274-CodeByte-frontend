@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, User, MessageCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import NotificationBell from '../common/NotificationBell';
+import MessagesDropdown from '../common/MessagesDropdown';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navigation = [
     { name: 'Explore Gigs', href: '/explore' },
@@ -17,6 +21,12 @@ const Header = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = () => {
+    logout();
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   return (
     <header className="bg-white shadow-lg border-b border-gray-100 sticky top-0 z-50">
@@ -48,13 +58,13 @@ const Header = () => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center space-x-8">
-            {navigation.map((item) => (
+            {navigation.map((item, idx) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`text-sm font-medium transition-colors duration-200 hover:text-blue-600 ${
                   isActive(item.href) ? 'text-blue-600' : 'text-gray-700'
-                }`}
+                }${item.name === 'Support' ? ' ml-6' : ''}`}
               >
                 {item.name}
               </Link>
@@ -63,48 +73,89 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <NotificationBell />
+            {isAuthenticated && user ? (
+              <>
+                {/* Notifications */}
+                <NotificationBell />
 
-            {/* Messages */}
-            <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-              <MessageCircle className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-                2
-              </span>
-            </button>
+                {/* Messages */}
+                <MessagesDropdown />
 
-            {/* Profile */}
-            <div className="relative group">
-              <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">John Doe</span>
-              </button>
-              
-              {/* Dropdown Menu */}
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div className="py-2">
-                  <Link to="/seller-dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Seller Dashboard
-                  </Link>
-                  <Link to="/buyer-dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Buyer Dashboard
-                  </Link>
-                  <Link to="/create-gig" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Create Gig
-                  </Link>
-                  <hr className="my-2" />
-                  <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Settings
-                  </Link>
-                  <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Sign Out
+                {/* Profile */}
+                <div className="relative group">
+                  <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <span className="text-sm font-medium text-gray-700 hidden sm:block">{user.name}</span>
                   </button>
+                  
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-2">
+                      {user.role === 'seller' && (
+                        <Link to="/seller-dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                          Seller Dashboard
+                        </Link>
+                      )}
+                      {(user.role === 'buyer' || user.role === 'seller') && (
+                        <Link to="/buyer-dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                          Buyer Dashboard
+                        </Link>
+                      )}
+                      {user.role === 'admin' && (
+                        <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                          Admin Panel
+                        </Link>
+                      )}
+                      <Link to="/create-gig" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Create Gig
+                      </Link>
+                      <Link to="/messages" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Messages
+                      </Link>
+                      <hr className="my-2" />
+                      <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Settings
+                      </Link>
+                      <button 
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <LogOut className="h-4 w-4" />
+                          <span>Sign Out</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Login/Register Buttons */}
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                >
+                  Join Now
+                </Link>
+                <Link
+                  to="/become-seller"
+                  className="px-4 py-2 border border-purple-600 text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors duration-200"
+                >
+                  Become a Seller
+                </Link>
+              </>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -145,6 +196,46 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {!isAuthenticated && (
+              <div className="pt-4 border-t border-gray-200 space-y-2">
+                <Link
+                  to="/login"
+                  className="block w-full text-center py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="block w-full text-center py-2 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Join Now
+                </Link>
+                <Link
+                  to="/become-seller"
+                  className="block w-full text-center py-2 px-4 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Become a Seller
+                </Link>
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <div className="pt-4 border-t border-gray-200 space-y-2">
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left py-2 px-4 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <div className="flex items-center space-x-2">
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

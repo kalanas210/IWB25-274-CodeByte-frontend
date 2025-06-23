@@ -1,203 +1,200 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Search, Filter, Star, Heart, Eye, Clock, ChevronDown, Grid, List, SlidersHorizontal, MapPin, Shield, Zap, Award, Users, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ExploreGigs = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPlatform, setSelectedPlatform] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [followerRange, setFollowerRange] = useState('all');
   const [priceRange, setPriceRange] = useState([0, 1000]);
-  const [deliveryTime, setDeliveryTime] = useState('all');
-  const [rating, setRating] = useState(0);
-  const [sortBy, setSortBy] = useState('relevance');
+  const [sortBy, setSortBy] = useState('rating');
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const [sellerLevel, setSellerLevel] = useState('all');
-  const [location, setLocation] = useState('all');
-  const [language, setLanguage] = useState('all');
 
-  // Mock data for gigs
+  // Mock influencers data
   const gigs = [
     {
       id: 1,
       title: 'I will promote your brand in my YouTube tech reviews with detailed analysis',
       creator: 'TechGuru Mike',
-      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 299,
-      originalPrice: 399,
+      username: '@techguruofficial',
+      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: true,
+      level: 'Top Rated',
+      location: 'San Francisco, CA',
+      responseTime: '1 hour',
       rating: 4.9,
       reviews: 127,
-      platform: 'YouTube',
-      category: 'Technology',
-      subscribers: '250K',
-      deliveryTime: '3 days',
-      featured: true,
-      level: 'Top Rated',
-      online: true,
-      location: 'United States',
-      language: 'English',
-      responseTime: '1 hour',
       completedOrders: 234,
-      inQueue: 3,
-      badges: ['Pro Verified', 'Fast Delivery']
+      startingPrice: 299,
+      platforms: ['YouTube', 'Instagram'],
+      categories: ['Technology', 'Reviews'],
+      followers: '250K',
+      followerCount: 250000,
+      engagementRate: '4.2%',
+      languages: ['English', 'Spanish'],
+      specialties: ['Tech Reviews', 'Product Analysis', 'Unboxing'],
+      online: true,
+      featured: true,
+      joinedDate: '2019'
     },
     {
       id: 2,
       title: 'Instagram story shoutout to 180K fitness audience with engagement guarantee',
       creator: 'FitLifeAna',
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/4050302/pexels-photo-4050302.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 149,
-      originalPrice: null,
-      rating: 5.0,
-      reviews: 89,
-      platform: 'Instagram',
-      category: 'Fitness',
-      subscribers: '180K',
-      deliveryTime: '1 day',
-      featured: false,
+      username: '@fitlifeana',
+      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/4050302/pexels-photo-4050302.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: true,
       level: 'Level 2',
-      online: false,
-      location: 'Canada',
-      language: 'English',
+      location: 'Toronto, Canada',
       responseTime: '2 hours',
-      completedOrders: 156,
-      inQueue: 1,
-      badges: ['Rising Talent']
+      rating: 4.8,
+      reviews: 156,
+      completedOrders: 189,
+      startingPrice: 149,
+      platforms: ['Instagram', 'TikTok'],
+      categories: ['Fitness', 'Health'],
+      followers: '180K',
+      followerCount: 180000,
+      engagementRate: '5.8%',
+      languages: ['English', 'French'],
+      specialties: ['Fitness Training', 'Nutrition', 'Wellness'],
+      online: false,
+      featured: true,
+      joinedDate: '2020'
     },
     {
       id: 3,
       title: 'TikTok viral dance with your product placement and trending hashtags',
       creator: 'DanceQueenSarah',
-      avatar: 'https://images.pexels.com/photos/1080213/pexels-photo-1080213.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/4050417/pexels-photo-4050417.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 199,
-      originalPrice: 249,
+      username: '@dancequeensarah',
+      avatar: 'https://images.pexels.com/photos/1080213/pexels-photo-1080213.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/4050417/pexels-photo-4050417.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: true,
+      level: 'Top Rated',
+      location: 'London, UK',
+      responseTime: '30 minutes',
       rating: 4.8,
       reviews: 156,
-      platform: 'TikTok',
-      category: 'Entertainment',
-      subscribers: '320K',
-      deliveryTime: '2 days',
-      featured: true,
-      level: 'Top Rated',
-      online: true,
-      location: 'United Kingdom',
-      language: 'English',
-      responseTime: '30 minutes',
       completedOrders: 189,
-      inQueue: 5,
-      badges: ['Trending Creator', 'Fast Delivery']
+      startingPrice: 199,
+      platforms: ['TikTok', 'Instagram'],
+      categories: ['Entertainment', 'Dance'],
+      followers: '320K',
+      followerCount: 320000,
+      engagementRate: '7.2%',
+      languages: ['English'],
+      specialties: ['Dance Choreography', 'Viral Content', 'Trends'],
+      online: true,
+      featured: true,
+      joinedDate: '2020'
     },
     {
       id: 4,
       title: 'Facebook page post and live stream mention for business growth',
       creator: 'BusinessBob',
-      avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/4050288/pexels-photo-4050288.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 179,
-      originalPrice: null,
+      username: '@businessbob',
+      avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/4050288/pexels-photo-4050288.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: false,
+      level: 'Level 1',
+      location: 'Sydney, Australia',
+      responseTime: '3 hours',
       rating: 4.7,
       reviews: 94,
-      platform: 'Facebook',
-      category: 'Business',
-      subscribers: '95K',
-      deliveryTime: '2 days',
-      featured: false,
-      level: 'Level 1',
-      online: true,
-      location: 'Australia',
-      language: 'English',
-      responseTime: '3 hours',
       completedOrders: 167,
-      inQueue: 2,
-      badges: ['Business Expert']
+      startingPrice: 179,
+      platforms: ['Facebook', 'LinkedIn'],
+      categories: ['Business', 'Marketing'],
+      followers: '95K',
+      followerCount: 95000,
+      engagementRate: '3.9%',
+      languages: ['English'],
+      specialties: ['B2B Marketing', 'Lead Generation', 'Business Growth'],
+      online: true,
+      featured: false,
+      joinedDate: '2021'
     },
     {
       id: 5,
       title: 'Gaming livestream sponsorship integration with audience interaction',
       creator: 'GameMasterAlex',
-      avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/3165335/pexels-photo-3165335.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 399,
-      originalPrice: 499,
+      username: '@gamemasteralex',
+      avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/3165335/pexels-photo-3165335.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: true,
+      level: 'Top Rated',
+      location: 'Berlin, Germany',
+      responseTime: '4 hours',
       rating: 4.9,
       reviews: 73,
-      platform: 'Twitch',
-      category: 'Gaming',
-      subscribers: '150K',
-      deliveryTime: '5 days',
-      featured: false,
-      level: 'Top Rated',
-      online: false,
-      location: 'Germany',
-      language: 'English',
-      responseTime: '4 hours',
       completedOrders: 98,
-      inQueue: 7,
-      badges: ['Gaming Pro', 'Live Expert']
+      startingPrice: 399,
+      platforms: ['Twitch', 'YouTube'],
+      categories: ['Gaming', 'Entertainment'],
+      followers: '150K',
+      followerCount: 150000,
+      engagementRate: '12.5%',
+      languages: ['English', 'German'],
+      specialties: ['Gaming Reviews', 'Live Streaming', 'Esports'],
+      online: false,
+      featured: false,
+      joinedDate: '2019'
     },
     {
       id: 6,
       title: 'Beauty tutorial featuring your products with detailed review',
       creator: 'GlowUpGuru',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      image: 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 259,
-      originalPrice: null,
+      username: '@glowupguru',
+      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
+      coverImage: 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=600',
+      verified: true,
+      level: 'Level 2',
+      location: 'Paris, France',
+      responseTime: '1 hour',
       rating: 5.0,
       reviews: 112,
-      platform: 'YouTube',
-      category: 'Beauty',
-      subscribers: '420K',
-      deliveryTime: '4 days',
-      featured: true,
-      level: 'Level 2',
-      online: true,
-      location: 'France',
-      language: 'English',
-      responseTime: '1 hour',
       completedOrders: 203,
-      inQueue: 4,
-      badges: ['Beauty Expert', 'Top Seller']
+      startingPrice: 259,
+      platforms: ['YouTube', 'Instagram'],
+      categories: ['Beauty', 'Fashion'],
+      followers: '420K',
+      followerCount: 420000,
+      engagementRate: '6.1%',
+      languages: ['English', 'French'],
+      specialties: ['Beauty Tutorials', 'Product Reviews', 'Makeup'],
+      online: true,
+      featured: true,
+      joinedDate: '2018'
     }
   ];
 
-  const categories = [
-    'All Categories', 'Technology', 'Fitness', 'Entertainment', 'Business', 'Gaming', 'Beauty', 'Fashion', 'Food', 'Travel', 'Education', 'Music'
-  ];
-
-  const platforms = [
-    'All Platforms', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'Twitter', 'Twitch', 'LinkedIn', 'Snapchat'
-  ];
-
-  const deliveryOptions = [
-    'Any Time', '24 Hours', '3 Days', '7 Days', '14 Days', '30 Days'
-  ];
-
-  const sellerLevels = [
-    'All Levels', 'New Seller', 'Level 1', 'Level 2', 'Top Rated'
-  ];
-
-  const locations = [
-    'All Locations', 'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Spain', 'Italy', 'Other'
-  ];
-
-  const languages = [
-    'All Languages', 'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Other'
+  const platforms = ['All Platforms', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'Twitter', 'Twitch', 'LinkedIn', 'Snapchat'];
+  const categories = ['All Categories', 'Technology', 'Fitness', 'Entertainment', 'Business', 'Gaming', 'Beauty', 'Fashion', 'Food', 'Travel'];
+  const locations = ['All Locations', 'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Spain', 'Other'];
+  const followerRanges = [
+    { value: 'all', label: 'All Followers' },
+    { value: '1k-10k', label: '1K - 10K' },
+    { value: '10k-50k', label: '10K - 50K' },
+    { value: '50k-100k', label: '50K - 100K' },
+    { value: '100k-500k', label: '100K - 500K' },
+    { value: '500k+', label: '500K+' }
   ];
 
   const sortOptions = [
-    { value: 'relevance', label: 'Relevance' },
-    { value: 'rating', label: 'Best Rating' },
+    { value: 'rating', label: 'Highest Rated' },
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'newest', label: 'Newest Arrivals'  },
-    { value: 'popular', label: 'Most Popular' }
+    { value: 'followers', label: 'Most Followers' },
+    { value: 'engagement', label: 'Best Engagement' },
+    { value: 'newest', label: 'Newest Members' }
   ];
 
-  const platformColors = {
+  const platformColors: { [key: string]: string } = {
     'YouTube': 'bg-red-100 text-red-800',
     'Instagram': 'bg-purple-100 text-purple-800',
     'TikTok': 'bg-pink-100 text-pink-800',
@@ -208,26 +205,62 @@ const ExploreGigs = () => {
     'Snapchat': 'bg-yellow-100 text-yellow-800'
   };
 
-  const levelColors = {
+  const levelColors: { [key: string]: string } = {
     'Top Rated': 'bg-yellow-100 text-yellow-800',
     'Level 2': 'bg-green-100 text-green-800',
     'Level 1': 'bg-blue-100 text-blue-800',
     'New Seller': 'bg-gray-100 text-gray-800'
   };
 
+  const filteredGigs = gigs.filter(gig => {
+    const matchesSearch = gig.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         gig.creator.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         gig.specialties.some(spec => spec.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesPlatform = selectedPlatform === 'all' || 
+                           gig.platforms.some(platform => platform.toLowerCase() === selectedPlatform.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' || 
+                           gig.categories.some(cat => cat.toLowerCase() === selectedCategory.toLowerCase());
+    
+    const matchesLocation = selectedLocation === 'all' || 
+                           gig.location.toLowerCase().includes(selectedLocation.toLowerCase());
+    
+    const matchesFollowers = followerRange === 'all' || (() => {
+      const count = gig.followerCount;
+      switch (followerRange) {
+        case '1k-10k': return count >= 1000 && count <= 10000;
+        case '10k-50k': return count >= 10000 && count <= 50000;
+        case '50k-100k': return count >= 50000 && count <= 100000;
+        case '100k-500k': return count >= 100000 && count <= 500000;
+        case '500k+': return count >= 500000;
+        default: return true;
+      }
+    })();
+    
+    const matchesPrice = gig.startingPrice >= priceRange[0] && gig.startingPrice <= priceRange[1];
+    
+    return matchesSearch && matchesPlatform && matchesCategory && matchesLocation && matchesFollowers && matchesPrice;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Explore Gigs</h1>
-              <p className="mt-2 text-gray-600">Find the perfect influencer for your next campaign</p>
-            </div>
-            
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              Explore 
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {" "}Gigs
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Find the perfect influencer for your next campaign
+            </p>
+
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl">
+            <div className="max-w-2xl mx-auto">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
@@ -242,19 +275,19 @@ const ExploreGigs = () => {
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Popular Tags */}
-          <div className="mt-6 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600 mr-2">Popular:</span>
-            {['YouTube Reviews', 'Instagram Stories', 'TikTok Trends', 'Gaming', 'Beauty'].map((tag) => (
-              <button 
-                key={tag} 
-                className="px-3 py-1 bg-white border border-gray-200 hover:border-blue-300 rounded-full text-sm text-gray-700 hover:text-blue-600 transition-colors duration-200"
-              >
-                {tag}
-              </button>
-            ))}
+            {/* Popular Tags */}
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
+              <span className="text-sm text-gray-600 mr-2">Popular:</span>
+              {['YouTube Reviews', 'Instagram Stories', 'TikTok Trends', 'Gaming', 'Beauty'].map((tag) => (
+                <button 
+                  key={tag} 
+                  className="px-3 py-1 bg-white border border-gray-200 hover:border-blue-300 rounded-full text-sm text-gray-700 hover:text-blue-600 transition-colors duration-200"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -308,6 +341,38 @@ const ExploreGigs = () => {
                 </select>
               </div>
 
+              {/* Followers Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Followers</label>
+                <select
+                  value={followerRange}
+                  onChange={(e) => setFollowerRange(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {followerRanges.map((range) => (
+                    <option key={range.value} value={range.value}>
+                      {range.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Location Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Location</label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {locations.map((location) => (
+                    <option key={location} value={location.toLowerCase().replace(' ', '-')}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Price Range */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Price Range</label>
@@ -343,116 +408,6 @@ const ExploreGigs = () => {
                 </div>
               </div>
 
-              {/* Delivery Time */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Delivery Time</label>
-                <select
-                  value={deliveryTime}
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {deliveryOptions.map((option) => (
-                    <option key={option} value={option.toLowerCase().replace(' ', '-')}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Seller Level */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Seller Level</label>
-                <select
-                  value={sellerLevel}
-                  onChange={(e) => setSellerLevel(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {sellerLevels.map((level) => (
-                    <option key={level} value={level.toLowerCase().replace(' ', '-')}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Location */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Seller Location</label>
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc.toLowerCase().replace(' ', '-')}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Language */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Language</label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {languages.map((lang) => (
-                    <option key={lang} value={lang.toLowerCase().replace(' ', '-')}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Rating Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Minimum Rating</label>
-                <div className="space-y-2">
-                  {[4.5, 4.0, 3.5, 3.0].map((ratingValue) => (
-                    <label key={ratingValue} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="rating"
-                        value={ratingValue}
-                        checked={rating === ratingValue}
-                        onChange={(e) => setRating(parseFloat(e.target.value))}
-                        className="mr-2"
-                      />
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(ratingValue) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-600">{ratingValue}+ ({Math.floor(Math.random() * 1000)})</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pro Services */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Pro Services</label>
-                <div className="space-y-2">
-                  {['Pro Verified', 'Fast Delivery', 'Top Seller'].map((service) => (
-                    <label key={service} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                      />
-                      <span className="text-sm text-gray-600">{service}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               {/* Clear Filters */}
               <button className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 Clear All Filters
@@ -473,7 +428,7 @@ const ExploreGigs = () => {
                   Filters
                 </button>
                 <p className="text-gray-600">
-                  <span className="font-semibold text-gray-900">{gigs.length}</span> services available
+                  <span className="font-semibold text-gray-900">{filteredGigs.length}</span> services available
                 </p>
               </div>
 
@@ -512,37 +467,9 @@ const ExploreGigs = () => {
               </div>
             </div>
 
-            {/* Active Filters */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              {selectedCategory !== 'all' && (
-                <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  Category: {selectedCategory.replace('-', ' ')}
-                  <button className="ml-2 text-blue-500 hover:text-blue-700">×</button>
-                </div>
-              )}
-              {selectedPlatform !== 'all' && (
-                <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  Platform: {selectedPlatform.replace('-', ' ')}
-                  <button className="ml-2 text-blue-500 hover:text-blue-700">×</button>
-                </div>
-              )}
-              {priceRange[0] > 0 || priceRange[1] < 1000 && (
-                <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  Price: ${priceRange[0]} - ${priceRange[1]}
-                  <button className="ml-2 text-blue-500 hover:text-blue-700">×</button>
-                </div>
-              )}
-              {rating > 0 && (
-                <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  Rating: {rating}+
-                  <button className="ml-2 text-blue-500 hover:text-blue-700">×</button>
-                </div>
-              )}
-            </div>
-
             {/* Gigs Grid/List */}
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : 'space-y-6'}>
-              {gigs.map((gig) => (
+              {filteredGigs.map((gig) => (
                 <div
                   key={gig.id}
                   className={`group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
@@ -552,7 +479,7 @@ const ExploreGigs = () => {
                   {/* Gig Image */}
                   <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0' : 'aspect-[4/3]'}`}>
                     <img
-                      src={gig.image}
+                      src={gig.coverImage}
                       alt={gig.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -570,8 +497,8 @@ const ExploreGigs = () => {
                     </button>
 
                     {/* Platform Badge */}
-                    <div className={`absolute bottom-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${platformColors[gig.platform] || 'bg-gray-100 text-gray-800'}`}>
-                      {gig.platform}
+                    <div className={`absolute bottom-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${platformColors[gig.platforms[0]] || 'bg-gray-100 text-gray-800'}`}>
+                      {gig.platforms[0]}
                     </div>
 
                     {/* Online Status */}
@@ -599,7 +526,7 @@ const ExploreGigs = () => {
                             {gig.level}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-600">{gig.subscribers} followers</p>
+                        <p className="text-xs text-gray-600">{gig.followers} followers</p>
                       </div>
                     </div>
 
@@ -618,35 +545,21 @@ const ExploreGigs = () => {
                       <span className="text-xs text-gray-500">{gig.completedOrders} orders completed</span>
                     </div>
 
-                    {/* Badges */}
-                    {gig.badges && gig.badges.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {gig.badges.map((badge) => (
-                          <span key={badge} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs">
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
                     {/* Price and Delivery */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{gig.deliveryTime}</span>
+                        <span className="text-sm text-gray-600">{gig.responseTime}</span>
                       </div>
                       <div className="text-right">
-                        {gig.originalPrice && (
-                          <p className="text-sm text-gray-500 line-through">${gig.originalPrice}</p>
-                        )}
-                        <p className="text-lg font-bold text-gray-900">${gig.price}</p>
+                        <p className="text-lg font-bold text-gray-900">${gig.startingPrice}</p>
                       </div>
                     </div>
 
                     {/* Quick Action Buttons */}
                     <div className="mt-4 flex space-x-2">
                       <Link
-                        to={gig.id === 1 ? `/product/${gig.id}` : `/gig/${gig.id}`}
+                        to={`/product/${gig.id}`}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium text-center hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
                       >
                         View Details
