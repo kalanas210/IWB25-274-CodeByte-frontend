@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Star, Heart, Eye, Clock, ChevronDown, Grid, List, SlidersHorizontal, MapPin, Shield, Zap, Award, Users, TrendingUp } from 'lucide-react';
+import { Search, SlidersHorizontal, Star, Heart, Eye, Clock, ChevronDown, Grid, List } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ExploreGigs = () => {
@@ -294,14 +294,30 @@ const ExploreGigs = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Filters */}
-          <div className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
+          {/* Sidebar Filters - Responsive Slide-over for mobile */}
+          {/* Overlay for mobile filter */}
+          {showFilters && (
+            <button
+              onClick={() => setShowFilters(false)}
+              className="fixed inset-0 z-40 bg-black bg-opacity-30 lg:hidden"
+              aria-label="Close filters overlay"
+              title="Close filters overlay"
+            />
+          )}
+          <div
+            className={`fixed z-50 inset-y-0 left-0 w-80 max-w-full bg-white border-r border-slate-200 shadow-xl transform transition-transform duration-300 lg:static lg:translate-x-0 lg:w-80 rounded-none lg:rounded-xl p-0 lg:p-6 ${
+              showFilters ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}
+            style={{ top: showFilters ? 0 : undefined }}
+          >
+            <div className="bg-white rounded-none lg:rounded-xl shadow-none lg:shadow-sm border-0 lg:border border-gray-200 p-6 sticky top-0 h-screen lg:h-auto overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
                 <button
                   onClick={() => setShowFilters(false)}
                   className="lg:hidden text-gray-400 hover:text-gray-600"
+                  aria-label="Close filters"
+                  title="Close filters"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -313,14 +329,14 @@ const ExploreGigs = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Category</label>
                 <select
+                  title="Category"
+                  aria-label="Category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {categories.map((category) => (
-                    <option key={category} value={category.toLowerCase().replace(' ', '-')}>
-                      {category}
-                    </option>
+                    <option key={category} value={category.toLowerCase().replace(' ', '-')}>{category}</option>
                   ))}
                 </select>
               </div>
@@ -329,14 +345,14 @@ const ExploreGigs = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Platform</label>
                 <select
+                  title="Platform"
+                  aria-label="Platform"
                   value={selectedPlatform}
                   onChange={(e) => setSelectedPlatform(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {platforms.map((platform) => (
-                    <option key={platform} value={platform.toLowerCase().replace(' ', '-')}>
-                      {platform}
-                    </option>
+                    <option key={platform} value={platform.toLowerCase().replace(' ', '-')}>{platform}</option>
                   ))}
                 </select>
               </div>
@@ -345,14 +361,14 @@ const ExploreGigs = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Followers</label>
                 <select
+                  title="Followers"
+                  aria-label="Followers"
                   value={followerRange}
                   onChange={(e) => setFollowerRange(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {followerRanges.map((range) => (
-                    <option key={range.value} value={range.value}>
-                      {range.label}
-                    </option>
+                    <option key={range.value} value={range.value}>{range.label}</option>
                   ))}
                 </select>
               </div>
@@ -361,14 +377,14 @@ const ExploreGigs = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Location</label>
                 <select
+                  title="Location"
+                  aria-label="Location"
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {locations.map((location) => (
-                    <option key={location} value={location.toLowerCase().replace(' ', '-')}>
-                      {location}
-                    </option>
+                    <option key={location} value={location.toLowerCase().replace(' ', '-')}>{location}</option>
                   ))}
                 </select>
               </div>
@@ -377,21 +393,23 @@ const ExploreGigs = () => {
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Price Range</label>
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <input
                       type="number"
-                      placeholder="Min"
+                      placeholder="Min price"
+                      aria-label="Minimum price"
                       value={priceRange[0]}
                       onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
                     />
-                    <span className="text-gray-500">to</span>
+                    <span className="text-gray-500 text-center">to</span>
                     <input
                       type="number"
-                      placeholder="Max"
+                      placeholder="Max price"
+                      aria-label="Maximum price"
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 1000])}
-                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
                     />
                   </div>
                   <div className="relative pt-1">
@@ -403,13 +421,14 @@ const ExploreGigs = () => {
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      aria-label="Maximum price range"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Clear Filters */}
-              <button className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+              <button className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200" aria-label="Clear all filters" title="Clear all filters">
                 Clear All Filters
               </button>
             </div>
@@ -423,6 +442,8 @@ const ExploreGigs = () => {
                 <button
                   onClick={() => setShowFilters(true)}
                   className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  aria-label="Open filters"
+                  title="Open filters"
                 >
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
                   Filters
@@ -452,6 +473,8 @@ const ExploreGigs = () => {
                 {/* Sort Dropdown */}
                 <div className="relative">
                   <select
+                    title="Sort by"
+                    aria-label="Sort by"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -492,7 +515,11 @@ const ExploreGigs = () => {
                     )}
 
                     {/* Favorite Button */}
-                    <button className="absolute top-3 right-3 w-8 h-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200 group/heart">
+                    <button
+                      className="absolute top-3 right-3 w-8 h-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200 group/heart"
+                      aria-label="Add to favorites"
+                      title="Add to favorites"
+                    >
                       <Heart className="h-4 w-4 text-gray-600 group-hover/heart:text-red-500 transition-colors duration-200" />
                     </button>
 
@@ -564,7 +591,7 @@ const ExploreGigs = () => {
                       >
                         View Details
                       </Link>
-                      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200" aria-label="Quick view" title="Quick view">
                         <Eye className="h-4 w-4" />
                       </button>
                     </div>
