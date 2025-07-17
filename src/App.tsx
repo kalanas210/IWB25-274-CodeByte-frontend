@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { ClerkProvider, SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/clerk-react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ChatWidget from './components/common/ChatWidget';
@@ -18,15 +18,18 @@ import AdminPanel from './pages/AdminPanel';
 import Messages from './pages/Messages';
 import Settings from './pages/Settings';
 import Support from './pages/Support';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import BecomeSeller from './pages/BecomeSeller';
+import SignInPage from './pages/sign-in';
 
 function App() {
+  const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  if (!PUBLISHABLE_KEY) {
+    throw new Error('Add your Clerk Publishable Key to the .env file');
+  }
   return (
-    <AuthProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <Router>
         <div className="min-h-screen bg-gray-50 flex flex-col">
+         
           <Header />
           <main className="flex-1">
             <Routes>
@@ -44,16 +47,14 @@ function App() {
               <Route path="/messages" element={<Messages />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/support" element={<Support />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/become-seller" element={<BecomeSeller />} />
+              <Route path="/sign-in/*" element={<SignInPage />} />
             </Routes>
           </main>
           <Footer />
           <ChatWidget />
         </div>
       </Router>
-    </AuthProvider>
+    </ClerkProvider>
   );
 }
 
