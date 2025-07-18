@@ -58,6 +58,13 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            {/* Be a Seller Button */}
+            <Link
+              to="/become-seller"
+              className="ml-4 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors duration-200 shadow"
+            >
+              Be a Seller
+            </Link>
           </nav>
 
           {/* User Actions & Mobile Menu Button */}
@@ -132,6 +139,14 @@ const Header = () => {
               {item.name}
             </Link>
           ))}
+          {/* Be a Seller Button (Mobile) */}
+          <Link
+            to="/become-seller"
+            className="block mt-2 text-center px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-colors duration-200 shadow"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Be a Seller
+          </Link>
         </div>
         <div className="px-4 pb-6">
           <SignedOut>

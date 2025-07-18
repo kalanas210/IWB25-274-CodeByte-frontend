@@ -29,135 +29,143 @@ import {
   FileText,
   CreditCard,
   Package,
-  Activity
+  Activity,
+  Search
 } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import { useAuth } from '@clerk/clerk-react';
+import { useEffect } from 'react';
+
+// Add interfaces for fetched data
+interface Order {
+  id: string;
+  gigId?: string;
+  gigTitle?: string;
+  buyer?: string;
+  buyerAvatar?: string;
+  package?: string;
+  price?: number;
+  status?: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  progress?: number;
+  requirements?: string;
+  platform?: string;
+  createdAt?: string;
+}
+
+interface Gig {
+  id: string;
+  title: string;
+  image?: string;
+  price?: number;
+  orders?: number;
+  rating?: number;
+  reviews?: number;
+  views?: number;
+  clicks?: number;
+  impressions?: number;
+  conversionRate?: string;
+  status?: string;
+  platform?: string;
+}
+
+interface ReviewsStats {
+  averageRating?: number;
+  totalReviews?: number;
+  ratingDistribution?: Record<string, number>;
+}
 
 const SellerDashboard = () => {
+  const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState('30');
+  const [profile, setProfile] = useState(null);
+  const [gigs, setGigs] = useState<Gig[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [reviewsStats, setReviewsStats] = useState<ReviewsStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock data
+  useEffect(() => {
+    const fetchSellerData = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const token = await getToken();
+        // 1. Get profile
+        const profileRes = await fetch('/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const profileData = await profileRes.json();
+        setProfile(profileData.data);
+        // 2. Get gigs
+        const gigsRes = await fetch('/api/gigs?type=selling', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const gigsData = await gigsRes.json();
+        setGigs(gigsData.data || []);
+        // 3. Get orders
+        const ordersRes = await fetch('/api/orders?type=selling', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.data || []);
+        // 4. Get reviews stats
+        if (profileData.data?.id) {
+          const reviewsRes = await fetch(`/api/reviews/seller/${profileData.data.id}/stats`);
+          const reviewsData = await reviewsRes.json();
+          setReviewsStats(reviewsData.data);
+        }
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load dashboard data.');
+        setLoading(false);
+      }
+    };
+    fetchSellerData();
+  }, [getToken]);
+
+  // Calculate earnings from completed orders
+  const totalEarnings = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.price || 0), 0);
+  const monthlyEarnings = orders.filter(o => o.status === 'completed' && o.createdAt && new Date(o.createdAt).getMonth() === new Date().getMonth()).reduce((sum, o) => sum + (o.price || 0), 0);
+  const activeOrders = orders.filter(o => o.status === 'in_progress').length;
+  const completedOrders = orders.filter(o => o.status === 'completed').length;
+  const avgRating = reviewsStats?.averageRating || 0;
+  const totalReviews = reviewsStats?.totalReviews || 0;
+
   const stats = {
-    totalEarnings: 12450,
-    monthlyEarnings: 3200,
-    activeOrders: 8,
-    completedOrders: 156,
-    avgRating: 4.9,
-    totalReviews: 127,
+    totalEarnings: totalEarnings,
+    monthlyEarnings: monthlyEarnings,
+    activeOrders: activeOrders,
+    completedOrders: completedOrders,
+    avgRating: avgRating,
+    totalReviews: totalReviews,
     responseTime: '1 hour',
     completionRate: '98%',
     repeatClients: '45%',
     totalViews: '2.5M'
   };
 
-  const orders = [
-    {
-      id: 'ORD-001',
-      gigTitle: 'YouTube tech review for smartphone',
-      buyer: 'Sarah Johnson',
-      buyerAvatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-      package: 'Standard Review',
-      price: 499,
-      status: 'in-progress',
-      orderDate: '2024-01-20',
-      deliveryDate: '2024-01-25',
-      progress: 60,
-      requirements: 'Please focus on camera quality and battery life features.',
-      platform: 'YouTube'
-    },
-    {
-      id: 'ORD-002',
-      gigTitle: 'Instagram story promotion for fitness brand',
-      buyer: 'David Chen',
-      buyerAvatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150',
-      package: 'Premium Package',
-      price: 299,
-      status: 'pending',
-      orderDate: '2024-01-22',
-      deliveryDate: '2024-01-27',
-      progress: 0,
-      requirements: 'Need emphasis on workout routines and nutrition tips.',
-      platform: 'Instagram'
-    },
-    {
-      id: 'ORD-003',
-      gigTitle: 'TikTok viral dance with product placement',
-      buyer: 'Emma Wilson',
-      buyerAvatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      package: 'Basic Package',
-      price: 199,
-      status: 'revision',
-      orderDate: '2024-01-18',
-      deliveryDate: '2024-01-23',
-      progress: 85,
-      requirements: 'Please make the dance more energetic and add trending hashtags.',
-      platform: 'TikTok'
-    },
-    {
-      id: 'ORD-004',
-      gigTitle: 'Facebook business page promotion',
-      buyer: 'Michael Rodriguez',
-      buyerAvatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150',
-      package: 'Standard Package',
-      price: 179,
-      status: 'completed',
-      orderDate: '2024-01-15',
-      deliveryDate: '2024-01-20',
-      progress: 100,
-      requirements: 'Focus on B2B audience and professional tone.',
-      platform: 'Facebook'
-    }
-  ];
+  const ordersData = orders; // Use the state variable directly
 
-  const gigs = [
-    {
-      id: 1,
-      title: 'I will create a detailed tech review video for your product',
-      image: 'https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 299,
-      orders: 234,
-      rating: 4.9,
-      reviews: 127,
-      views: 15420,
-      clicks: 892,
-      impressions: 45600,
-      conversionRate: '1.95%',
-      status: 'active',
-      platform: 'YouTube'
-    },
-    {
-      id: 2,
-      title: 'Instagram story promotion for your brand',
-      image: 'https://images.pexels.com/photos/4050302/pexels-photo-4050302.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 149,
-      orders: 156,
-      rating: 4.8,
-      reviews: 89,
-      views: 8920,
-      clicks: 445,
-      impressions: 28400,
-      conversionRate: '1.57%',
-      status: 'active',
-      platform: 'Instagram'
-    },
-    {
-      id: 3,
-      title: 'TikTok viral content creation',
-      image: 'https://images.pexels.com/photos/4050417/pexels-photo-4050417.jpeg?auto=compress&cs=tinysrgb&w=600',
-      price: 199,
-      orders: 98,
-      rating: 4.7,
-      reviews: 67,
-      views: 5640,
-      clicks: 312,
-      impressions: 18900,
-      conversionRate: '1.65%',
-      status: 'paused',
-      platform: 'TikTok'
-    }
-  ];
+  const gigsData = gigs; // Use the state variable directly
 
   const recentActivity = [
     {
@@ -194,7 +202,8 @@ const SellerDashboard = () => {
     }
   ];
 
-  const statusColors = {
+  // Add type for statusColors and statusIcons
+  const statusColors: { [key: string]: string } = {
     'completed': 'bg-green-100 text-green-800',
     'in-progress': 'bg-blue-100 text-blue-800',
     'revision': 'bg-orange-100 text-orange-800',
@@ -202,7 +211,7 @@ const SellerDashboard = () => {
     'cancelled': 'bg-red-100 text-red-800'
   };
 
-  const statusIcons = {
+  const statusIcons: { [key: string]: any } = {
     'completed': CheckCircle,
     'in-progress': Clock,
     'revision': RefreshCw,
@@ -210,25 +219,73 @@ const SellerDashboard = () => {
     'cancelled': XCircle
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.gigTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.buyer.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredOrders = ordersData.filter(order => {
+    const matchesSearch = (order.gigTitle ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (order.buyer ?? '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  // Sample data for charts and transactions
+  const earningsData = [
+    { month: 'Jan', earnings: 1200 },
+    { month: 'Feb', earnings: 2100 },
+    { month: 'Mar', earnings: 800 },
+    { month: 'Apr', earnings: 1600 },
+    { month: 'May', earnings: 2400 },
+    { month: 'Jun', earnings: 2000 },
+  ];
+  const transactions = [
+    { id: 'TXN-001', date: '2024-05-01', amount: 500, status: 'Completed', type: 'Withdrawal' },
+    { id: 'TXN-002', date: '2024-05-03', amount: 1200, status: 'Pending', type: 'Earnings' },
+    { id: 'TXN-003', date: '2024-05-05', amount: 800, status: 'Completed', type: 'Earnings' },
+    { id: 'TXN-004', date: '2024-05-07', amount: 300, status: 'Completed', type: 'Withdrawal' },
+  ];
+
+  // Add mock data for analytics
+  const orderStatusData = [
+    { status: 'Completed', count: 24 },
+    { status: 'In Progress', count: 8 },
+    { status: 'Pending', count: 5 },
+    { status: 'Cancelled', count: 2 },
+  ];
+  const platformData = [
+    { platform: 'YouTube', value: 12 },
+    { platform: 'Instagram', value: 8 },
+    { platform: 'TikTok', value: 6 },
+    { platform: 'Other', value: 3 },
+  ];
+  const COLORS = ['#6366f1', '#10b981', '#f59e42', '#f43f5e'];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      {/* Seller Dashboard Nav Bar/Header */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-40 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Seller Dashboard</h1>
-              <p className="text-sm text-gray-600">Manage your gigs, orders, and earnings</p>
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3 group flex-shrink-0">
+              <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-200">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors duration-200">
+                Socyads
+              </span>
+            </Link>
+            {/* Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-md mx-4 md:mx-8">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Search your gigs, orders..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all duration-200 text-slate-900 placeholder-slate-500"
+                />
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
+            {/* Actions */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-900">
                 <Bell className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   5
@@ -236,12 +293,19 @@ const SellerDashboard = () => {
               </button>
               <Link
                 to="/create-gig"
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg bg-black text-white text-sm font-semibold hover:bg-gray-900 transition-all duration-200 shadow flex items-center space-x-2"
               >
                 <Plus className="h-4 w-4" />
                 <span>Create Gig</span>
               </Link>
-              <button className="p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
+              <Link
+                to="/messages"
+                className="p-2 rounded-full text-gray-600 hover:text-black hover:bg-gray-100 transition-colors duration-200 border border-transparent focus:outline-none focus:ring-2 focus:ring-black"
+                title="Messages"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Link>
+              <button className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-900">
                 <Settings className="h-6 w-6" />
               </button>
             </div>
@@ -252,7 +316,7 @@ const SellerDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tabs */}
         <div className="mb-8">
-          <nav className="flex space-x-8">
+          <nav className="flex space-x-8 items-center">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'orders', label: 'Active Orders', icon: ShoppingCart },
@@ -267,8 +331,8 @@ const SellerDashboard = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-black text-black'
+                      : 'border-transparent text-gray-600 hover:text-black hover:border-black'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -344,6 +408,24 @@ const SellerDashboard = () => {
                   <span className="text-gray-600">Excellent response rate</span>
                 </div>
               </div>
+            </div>
+            {/* Earnings Chart */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Trend (Last 6 Months)</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={earningsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  {/* @ts-expect-error */}
+                  <XAxis dataKey="month" />
+                  {/* @ts-expect-error */}
+                  <YAxis />
+                  <Tooltip />
+                  {/* @ts-expect-error */}
+                  <Legend />
+                  {/* @ts-expect-error */}
+                  <Line type="monotone" dataKey="earnings" stroke="#6366f1" strokeWidth={3} dot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
             {/* Recent Activity & Quick Actions */}
@@ -477,45 +559,45 @@ const SellerDashboard = () => {
             {/* Orders List */}
             <div className="space-y-4">
               {filteredOrders.map((order) => {
-                const StatusIcon = statusIcons[order.status];
+                const StatusIcon = statusIcons[order.status ?? 'pending'];
                 return (
                   <div key={order.id} className="bg-white rounded-xl border border-gray-200 p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={order.buyerAvatar}
-                          alt={order.buyer}
+                          src={order.buyerAvatar ?? ''}
+                          alt={order.buyer ?? ''}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">{order.gigTitle}</h3>
-                          <p className="text-sm text-gray-600 mb-2">by {order.buyer}</p>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">{order.gigTitle ?? ''}</h3>
+                          <p className="text-sm text-gray-600 mb-2">by {order.buyer ?? ''}</p>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span>Order #{order.id}</span>
                             <span>•</span>
-                            <span>{order.package}</span>
+                            <span>{order.package ?? ''}</span>
                             <span>•</span>
-                            <span>{order.platform}</span>
+                            <span>{order.platform ?? ''}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
+                        <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status ?? 'pending']}`}>
                           <StatusIcon className="h-3 w-3" />
-                          <span className="capitalize">{order.status.replace('-', ' ')}</span>
+                          <span className="capitalize">{(order.status ?? 'pending').replace('-', ' ')}</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900 mt-2">${order.price}</p>
+                        <p className="text-lg font-bold text-gray-900 mt-2">${order.price ?? 0}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-gray-600">Order Date</p>
-                        <p className="font-medium text-gray-900">{order.orderDate}</p>
+                        <p className="font-medium text-gray-900">{order.orderDate ?? ''}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Delivery Date</p>
-                        <p className="font-medium text-gray-900">{order.deliveryDate}</p>
+                        <p className="font-medium text-gray-900">{order.deliveryDate ?? ''}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Progress</p>
@@ -523,17 +605,17 @@ const SellerDashboard = () => {
                           <div className="flex-1 bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${order.progress}%` }}
+                              style={{ width: `${order.progress ?? 0}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">{order.progress}%</span>
+                          <span className="text-sm font-medium text-gray-900">{order.progress ?? 0}%</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <p className="text-sm text-gray-600 mb-2">Requirements</p>
-                      <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{order.requirements}</p>
+                      <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{order.requirements ?? ''}</p>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -589,11 +671,11 @@ const SellerDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {gigs.map((gig) => (
+              {gigsData.map((gig) => (
                 <div key={gig.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
                   <div className="aspect-video relative">
                     <img
-                      src={gig.image}
+                      src={gig.image ?? ''}
                       alt={gig.title}
                       className="w-full h-full object-cover"
                     />
@@ -602,7 +684,7 @@ const SellerDashboard = () => {
                       gig.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {gig.status}
+                      {gig.status ?? ''}
                     </div>
                   </div>
                   
@@ -612,31 +694,31 @@ const SellerDashboard = () => {
                     <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                       <div>
                         <span className="text-gray-600">Price:</span>
-                        <span className="font-semibold text-gray-900 ml-1">${gig.price}</span>
+                        <span className="font-semibold text-gray-900 ml-1">${gig.price ?? 0}</span>
                       </div>
                       <div>
                         <span className="text-gray-600">Orders:</span>
-                        <span className="font-semibold text-gray-900 ml-1">{gig.orders}</span>
+                        <span className="font-semibold text-gray-900 ml-1">{gig.orders ?? 0}</span>
                       </div>
                       <div>
                         <span className="text-gray-600">Rating:</span>
-                        <span className="font-semibold text-gray-900 ml-1">{gig.rating}</span>
+                        <span className="font-semibold text-gray-900 ml-1">{gig.rating ?? 0}</span>
                       </div>
                       <div>
                         <span className="text-gray-600">Views:</span>
-                        <span className="font-semibold text-gray-900 ml-1">{gig.views.toLocaleString()}</span>
+                        <span className="font-semibold text-gray-900 ml-1">{gig.views?.toLocaleString() ?? '0'}</span>
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="text-gray-600">Conversion Rate</span>
-                        <span className="font-medium text-gray-900">{gig.conversionRate}</span>
+                        <span className="font-medium text-gray-900">{gig.conversionRate ?? '0%'}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: gig.conversionRate }}
+                          style={{ width: gig.conversionRate ?? '0%' }}
                         ></div>
                       </div>
                     </div>
@@ -665,31 +747,71 @@ const SellerDashboard = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Earnings Overview</h3>
-              
+              {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="text-center p-6 bg-green-50 rounded-xl">
                   <div className="text-3xl font-bold text-green-600 mb-2">${stats.totalEarnings.toLocaleString()}</div>
                   <div className="text-sm text-green-800">Total Earnings</div>
-                  <div className="text-xs text-green-600 mt-1">+15% vs last month</div>
                 </div>
                 <div className="text-center p-6 bg-blue-50 rounded-xl">
                   <div className="text-3xl font-bold text-blue-600 mb-2">${stats.monthlyEarnings.toLocaleString()}</div>
                   <div className="text-sm text-blue-800">This Month</div>
-                  <div className="text-xs text-blue-600 mt-1">+8% vs last month</div>
                 </div>
                 <div className="text-center p-6 bg-purple-50 rounded-xl">
-                  <div className="text-3xl font-bold text-purple-600 mb-2">${Math.round(stats.totalEarnings / stats.completedOrders)}</div>
+                  <div className="text-3xl font-bold text-purple-600 mb-2">${Math.round(stats.totalEarnings / (stats.completedOrders || 1))}</div>
                   <div className="text-sm text-purple-800">Avg per Order</div>
-                  <div className="text-xs text-purple-600 mt-1">+5% vs last month</div>
                 </div>
               </div>
-
-              <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Detailed Earnings Analytics Coming Soon</h3>
-                <p className="text-gray-600">
-                  We're working on comprehensive earnings dashboard with charts, trends, and detailed breakdowns.
-                </p>
+              {/* Earnings Chart */}
+              <div className="mb-8">
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={earningsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    {/* @ts-expect-error */}
+                    <XAxis dataKey="month" />
+                    {/* @ts-expect-error */}
+                    <YAxis />
+                    <Tooltip />
+                    {/* @ts-expect-error */}
+                    <Legend />
+                    {/* @ts-expect-error */}
+                    <Line type="monotone" dataKey="earnings" stroke="#6366f1" strokeWidth={3} dot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Transactions Table */}
+              <div className="overflow-x-auto">
+                <h4 className="text-md font-semibold text-gray-900 mb-2">Recent Transactions</h4>
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((txn) => (
+                      <tr key={txn.id} className="border-t border-gray-100">
+                        <td className="px-4 py-2 text-sm text-gray-900">{txn.id}</td>
+                        <td className="px-4 py-2 text-sm text-gray-600">{txn.date}</td>
+                        <td className="px-4 py-2 text-sm text-gray-600">{txn.type}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900 font-semibold">${txn.amount}</td>
+                        <td className="px-4 py-2 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            txn.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                            txn.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {txn.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -712,36 +834,68 @@ const SellerDashboard = () => {
                   <option value="365">Last year</option>
                 </select>
               </div>
-
+              {/* Analytics Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600 mb-2">45.6K</div>
                   <div className="text-sm text-blue-800">Profile Views</div>
-                  <div className="text-xs text-blue-600 mt-1">+12% vs last period</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600 mb-2">1.2K</div>
                   <div className="text-sm text-green-800">Gig Clicks</div>
-                  <div className="text-xs text-green-600 mt-1">+8% vs last period</div>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600 mb-2">2.1%</div>
                   <div className="text-sm text-purple-800">Conversion Rate</div>
-                  <div className="text-xs text-purple-600 mt-1">+0.3% vs last period</div>
                 </div>
                 <div className="text-center p-4 bg-orange-50 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600 mb-2">4.9</div>
                   <div className="text-sm text-orange-800">Avg Rating</div>
-                  <div className="text-xs text-orange-600 mt-1">+0.1 vs last period</div>
                 </div>
               </div>
-
-              <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Advanced Analytics Coming Soon</h3>
-                <p className="text-gray-600">
-                  Detailed performance metrics, conversion funnels, and growth insights are being developed.
-                </p>
+              {/* Analytics Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* Order Status Bar Chart */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-2">Order Status Breakdown</h4>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={orderStatusData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      {/* @ts-expect-error */}
+                      <XAxis dataKey="status" />
+                      {/* @ts-expect-error */}
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      {/* @ts-expect-error */}
+                      <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Platform Pie Chart */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-2">Gig Platform Distribution</h4>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      {/* @ts-expect-error */}
+                      <Pie
+                        data={platformData}
+                        dataKey="value"
+                        nameKey="platform"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        label
+                      >
+                        {platformData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      {/* @ts-expect-error */}
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>

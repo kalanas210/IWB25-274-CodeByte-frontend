@@ -30,10 +30,50 @@ import {
   Eye,
   AlertCircle
 } from 'lucide-react';
+import { useUser, useAuth, RedirectToSignIn } from "@clerk/clerk-react";
+
+// Add types for social accounts
+interface SocialAccount {
+  username: string;
+  followers: string;
+  verified: boolean;
+}
+
+interface SocialAccounts {
+  [key: string]: SocialAccount;
+  youtube: SocialAccount;
+  instagram: SocialAccount;
+  tiktok: SocialAccount;
+  facebook: SocialAccount;
+  twitter: SocialAccount;
+  linkedin: SocialAccount;
+}
+
+interface BecomeSellerFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  profileImage: null;
+  professionalTitle: string;
+  description: string;
+  skills: string[];
+  experience: string;
+  languages: string[];
+  socialAccounts: SocialAccounts;
+  portfolioItems: any[];
+  idDocument: null;
+  addressProof: null;
+}
 
 const BecomeSeller = () => {
+  const { isSignedIn } = useUser();
+  const { getToken } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BecomeSellerFormData>({
     // Personal Info
     firstName: '',
     lastName: '',
@@ -171,7 +211,7 @@ const BecomeSeller = () => {
     }
   };
 
-  const handleSocialAccountChange = (platform: string, field: string, value: any) => {
+  const handleSocialAccountChange = (platform: keyof SocialAccounts, field: keyof SocialAccount, value: any) => {
     setFormData(prev => ({
       ...prev,
       socialAccounts: {
@@ -230,10 +270,92 @@ const BecomeSeller = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Seller application submitted:', formData);
-    // Handle form submission
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+
+      // 1. Upload profile photo if present
+      let avatarUrl = '';
+      if (formData.profileImage) {
+        const form = new FormData();
+        form.append('file', formData.profileImage);
+        const res = await fetch('/api/upload/single', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form
+        });
+        const data = await res.json();
+        avatarUrl = data?.data?.url || '';
+      }
+
+      // 2. Upload portfolio items (if any)
+      let portfolioUrls: string[] = [];
+      if (formData.portfolioItems && formData.portfolioItems.length > 0) {
+        const form = new FormData();
+        formData.portfolioItems.forEach((file: File) => form.append('files', file));
+        const res = await fetch('/api/upload/multiple', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form
+        });
+        const data = await res.json();
+        portfolioUrls = data?.data?.map((f: any) => f.url) || [];
+      }
+
+      // 3. Upload verification docs (if any)
+      let verificationUrls: string[] = [];
+      if (formData.idDocument || formData.addressProof) {
+        const form = new FormData();
+        if (formData.idDocument) form.append('files', formData.idDocument);
+        if (formData.addressProof) form.append('files', formData.addressProof);
+        const res = await fetch('/api/upload/multiple', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form
+        });
+        const data = await res.json();
+        verificationUrls = data?.data?.map((f: any) => f.url) || [];
+      }
+
+      // 4. Send all data to become-seller endpoint
+      const res = await fetch('/api/users/become-seller', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          professionalTitle: formData.professionalTitle,
+          experience: formData.experience,
+          bio: formData.description,
+          skills: formData.skills,
+          languages: formData.languages,
+          location: `${formData.city}, ${formData.country}`,
+          avatar: avatarUrl,
+          socialAccounts: formData.socialAccounts,
+          portfolio: portfolioUrls,
+          verificationDocs: verificationUrls
+        })
+      });
+
+      setLoading(false);
+      if (res.ok) {
+        window.location.href = '/seller-dashboard';
+      } else {
+        const error = await res.json();
+        alert(error?.error?.message || 'Failed to register as seller');
+      }
+    } catch (err) {
+      setLoading(false);
+      alert('An error occurred. Please try again.');
+    }
   };
+
+  // Only allow form steps (2+) if authenticated
+  if ((currentStep > 1) && !isSignedIn) return <RedirectToSignIn />;
 
   if (currentStep === 1 && !formData.firstName) {
     // Landing page
@@ -384,22 +506,16 @@ const BecomeSeller = () => {
   // Application Form
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">Socyads</span>
-            </Link>
-            <div className="text-sm text-gray-600">
-              Step {currentStep} of {steps.length}
-            </div>
+      {/* Step Indicator */}
+      {currentStep > 1 && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+          <div className="text-sm text-gray-600 font-semibold mb-2 text-right">
+            Step {currentStep} of {steps.length}
           </div>
         </div>
-      </div>
+      )}
+      {/* Header */}
+      {/* Removed the secondary logo/header block */}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Bar */}
@@ -537,9 +653,12 @@ const BecomeSeller = () => {
                     <Camera className="h-8 w-8 text-gray-400" />
                   </div>
                   <div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                      Upload Photo
-                    </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => handleInputChange('profileImage', e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
                     <p className="text-sm text-gray-500 mt-1">JPG, PNG up to 5MB</p>
                   </div>
                 </div>
@@ -711,8 +830,8 @@ const BecomeSeller = () => {
                         <label className="block text-sm text-gray-600 mb-1">Username/Handle</label>
                         <input
                           type="text"
-                          value={formData.socialAccounts[platform].username}
-                          onChange={(e) => handleSocialAccountChange(platform, 'username', e.target.value)}
+                          value={formData.socialAccounts[platform as keyof SocialAccounts].username}
+                          onChange={(e) => handleSocialAccountChange(platform as keyof SocialAccounts, 'username', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder={`@your${platform}handle`}
                         />
@@ -722,8 +841,8 @@ const BecomeSeller = () => {
                         <label className="block text-sm text-gray-600 mb-1">Followers/Subscribers</label>
                         <input
                           type="text"
-                          value={formData.socialAccounts[platform].followers}
-                          onChange={(e) => handleSocialAccountChange(platform, 'followers', e.target.value)}
+                          value={formData.socialAccounts[platform as keyof SocialAccounts].followers}
+                          onChange={(e) => handleSocialAccountChange(platform as keyof SocialAccounts, 'followers', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="e.g., 10K, 50K, 1M"
                         />
@@ -732,8 +851,8 @@ const BecomeSeller = () => {
                       <div className="flex items-center">
                         <input
                           type="checkbox"
-                          checked={formData.socialAccounts[platform].verified}
-                          onChange={(e) => handleSocialAccountChange(platform, 'verified', e.target.checked)}
+                          checked={formData.socialAccounts[platform as keyof SocialAccounts].verified}
+                          onChange={(e) => handleSocialAccountChange(platform as keyof SocialAccounts, 'verified', e.target.checked)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label className="ml-2 text-sm text-gray-600">Verified Account</label>
@@ -772,9 +891,12 @@ const BecomeSeller = () => {
                 <p className="text-gray-600 mb-4">
                   Add images, videos, or links to your best work
                 </p>
-                <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                  Choose Files
-                </button>
+                <input
+                  type="file"
+                  multiple
+                  onChange={e => handleInputChange('portfolioItems', Array.from(e.target.files || []))}
+                  className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
                 <p className="text-sm text-gray-500 mt-2">
                   Supported formats: JPG, PNG, MP4, MOV (max 50MB each)
                 </p>
@@ -782,18 +904,24 @@ const BecomeSeller = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Placeholder portfolio items */}
-                {[1, 2, 3].map((item) => (
-                  <div key={item} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="aspect-video bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-gray-400" />
+                {formData.portfolioItems && formData.portfolioItems.length > 0 ? (
+                  formData.portfolioItems.map((item, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="aspect-video bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                        <FileText className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Portfolio item title"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Portfolio item title"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
+                  ))
+                ) : (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 text-center">
+                    <p className="text-gray-500">No portfolio items uploaded yet.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -812,9 +940,11 @@ const BecomeSeller = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-2">Upload a photo of your ID</p>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
-                      Choose File
-                    </button>
+                    <input
+                      type="file"
+                      onChange={e => handleInputChange('idDocument', e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Accepted: Passport, Driver's License, National ID
@@ -826,9 +956,11 @@ const BecomeSeller = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-2">Upload proof of address</p>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
-                      Choose File
-                    </button>
+                    <input
+                      type="file"
+                      onChange={e => handleInputChange('addressProof', e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Accepted: Utility bill, Bank statement (last 3 months)
@@ -872,9 +1004,10 @@ const BecomeSeller = () => {
             ) : (
               <button
                 onClick={handleSubmit}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                disabled={loading}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>Submit Application</span>
+                <span>{loading ? "Submitting..." : "Submit Application"}</span>
                 <CheckCircle className="h-4 w-4" />
               </button>
             )}
