@@ -27,6 +27,8 @@ import {
   Verified
 } from 'lucide-react';
 import { products, reviews, relatedGigs } from '../data/assets';
+import { zoomService, type MeetingScheduleRequest } from '../services/zoomService';
+import { authService } from '../services/authService';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -41,6 +43,9 @@ const ProductDetail = () => {
   const [chatMessage, setChatMessage] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
+  const [scheduleSuccess, setScheduleSuccess] = useState('');
 
   useEffect(() => {
     const foundProduct = products.find(p => p.id === parseInt(id));
@@ -49,6 +54,9 @@ const ProductDetail = () => {
       const popularPackage = foundProduct.packages.find(p => p.popular);
       setSelectedPackage(popularPackage ? popularPackage.id : foundProduct.packages[0].id);
     }
+
+    // Initialize authentication for development
+    authService.initializeAuth();
   }, [id]);
 
   if (!product) {
@@ -98,13 +106,55 @@ const ProductDetail = () => {
     }
   };
 
-  const handleScheduleCall = () => {
-    if (selectedDate && selectedTime) {
-      // Handle scheduling logic here
-      console.log('Scheduling call for:', selectedDate, selectedTime);
-      setShowScheduleModal(false);
-      setSelectedDate('');
-      setSelectedTime('');
+  const handleScheduleCall = async () => {
+    if (!selectedDate || !selectedTime) {
+      setScheduleError('Please select both date and time');
+      return;
+    }
+
+    setIsScheduling(true);
+    setScheduleError('');
+    setScheduleSuccess('');
+
+    try {
+      // Combine date and time
+      const startTime = new Date(`${selectedDate}T${selectedTime}:00`);
+      
+      // Create meeting data
+      const meetingData: MeetingScheduleRequest = {
+        startTime: startTime.toISOString(),
+        duration: 30, // Default 30 minutes
+        topic: `SocyAds Consultation - ${product?.title}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        sellerId: product?.creator?.id || 'seller-id', // TODO: Get actual seller ID
+        gigId: product?.id?.toString() || 'gig-id' // TODO: Get actual gig ID
+      };
+
+      // Validate meeting data
+      const validation = zoomService.validateMeetingData(meetingData);
+      if (!validation.isValid) {
+        setScheduleError(validation.errors.join(', '));
+        return;
+      }
+
+      // Schedule the meeting
+      const meeting = await zoomService.scheduleMeeting(meetingData);
+      
+      setScheduleSuccess('Meeting scheduled successfully! Check your email for details.');
+      
+      // Reset form
+      setTimeout(() => {
+        setShowScheduleModal(false);
+        setSelectedDate('');
+        setSelectedTime('');
+        setScheduleSuccess('');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error scheduling meeting:', error);
+      setScheduleError(error instanceof Error ? error.message : 'Failed to schedule meeting');
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -784,6 +834,26 @@ const ProductDetail = () => {
                 </button>
               </div>
               
+              {scheduleSuccess && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                    <span className="text-green-800 text-sm">{scheduleSuccess}</span>
+                  </div>
+                </div>
+              )}
+              
+              {scheduleError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-red-800 text-sm">{scheduleError}</span>
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
@@ -791,6 +861,7 @@ const ProductDetail = () => {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -811,21 +882,42 @@ const ProductDetail = () => {
                     <option value="16:00">4:00 PM</option>
                   </select>
                 </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center space-x-2">
+                    <Video className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">Video Call Details</span>
+                  </div>
+                  <p className="text-sm text-blue-800 mt-1">
+                    Duration: 30 minutes • Platform: Zoom • You'll receive an email with meeting details
+                  </p>
+                </div>
               </div>
               
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setShowScheduleModal(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+                  disabled={isScheduling}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleScheduleCall}
-                  disabled={!selectedDate || !selectedTime}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  disabled={!selectedDate || !selectedTime || isScheduling}
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Schedule Call
+                  {isScheduling ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Scheduling...
+                    </>
+                  ) : (
+                    'Schedule Call'
+                  )}
                 </button>
               </div>
             </div>
